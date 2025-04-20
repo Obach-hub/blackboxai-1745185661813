@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard - TUM SANITORIUM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+    <header class="bg-blue-600 text-white p-4 shadow flex justify-between items-center">
+        <h1 class="text-3xl font-bold">TUM SANITORIUM - Dashboard</h1>
+        <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded">
+            Logout
+        </button>
+    </header>
+    <main class="flex-grow p-6 max-w-4xl mx-auto">
+        <h2 class="text-2xl mb-4" id="welcomeMessage">Welcome, User</h2>
+        <div class="mb-6">
+            <a href="book-appointment.html" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded inline-flex items-center">
+                <i class="fas fa-calendar-plus mr-2"></i> Book New Appointment
+            </a>
+        </div>
+        <section>
+            <h3 class="text-xl mb-3 font-semibold">Your Appointments</h3>
+            <div id="appointmentsList" class="space-y-4">
+                <!-- Appointments will be loaded here -->
+            </div>
+        </section>
+    </main>
+    <footer class="bg-gray-200 text-center p-4">
+        &copy; 2024 TUM SANITORIUM. All rights reserved.
+    </footer>
+
+    <script>
+        async function fetchUserInfo() {
+            // For demo, we get user info from sessionStorage (in real app, get from server or session)
+            const fullName = sessionStorage.getItem('fullName');
+            if (!fullName) {
+                window.location.href = 'login.html';
+                return;
+            }
+            document.getElementById('welcomeMessage').textContent = `Welcome, ${fullName}`;
+        }
+
+        async function fetchAppointments() {
+            const response = await fetch('/appointment', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            const result = await response.json();
+            const container = document.getElementById('appointmentsList');
+            container.innerHTML = '';
+            if (result.success) {
+                if (result.appointments.length === 0) {
+                    container.innerHTML = '<p>No appointments found.</p>';
+                } else {
+                    result.appointments.forEach(appt => {
+                        const apptDiv = document.createElement('div');
+                        apptDiv.className = 'bg-white p-4 rounded shadow flex justify-between items-center';
+
+                        const infoDiv = document.createElement('div');
+                        infoDiv.innerHTML = `
+                            <p><strong>Doctor:</strong> ${appt.doctorName}</p>
+                            <p><strong>Date:</strong> ${new Date(appt.appointmentDate).toLocaleString()}</p>
+                            <p><strong>Status:</strong> ${appt.status}</p>
+                        `;
+
+                        const whatsappLink = document.createElement('a');
+                        whatsappLink.href = "https://wa.me/" + appt.whatsappNumber;
+                        whatsappLink.target = '_blank';
+                        whatsappLink.className = 'bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded inline-flex items-center';
+                        whatsappLink.innerHTML = '<i class="fab fa-whatsapp mr-2"></i> Contact Doctor';
+
+                        apptDiv.appendChild(infoDiv);
+                        apptDiv.appendChild(whatsappLink);
+                        container.appendChild(apptDiv);
+                    });
+                }
+            } else {
+                container.innerHTML = '<p>Error loading appointments.</p>';
+            }
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            // Clear session and redirect to login
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        });
+
+        // On page load
+        window.onload = async () => {
+            await fetchUserInfo();
+            await fetchAppointments();
+        };
+
+        // Save fullName to sessionStorage on login (simulate)
+        // In real app, this should be set on login success
+        if (!sessionStorage.getItem('fullName')) {
+            // For demo, redirect to login
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
